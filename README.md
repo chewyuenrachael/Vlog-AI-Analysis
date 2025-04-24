@@ -1,100 +1,125 @@
-# Vlog AI Analysis
-This project focuses on analyzing and decoding the underlying emotions conveyed through vlogs recorded between 2020 and 2023. The aim is to build a machine learning pipeline capable of recognizing tonal dynamics and classifying vlog segments into distinct emotional categories.
+# 🎙️ Vlog AI Analysis: Emotion Recognition via Audio Clustering
 
-### Key Objectives:
-1. **Data Pre-processing:** Extract and format audio from vlogs for analysis.
-2. **Feature Engineering:** Apply audio metrics like tonality, pitch, and frequency to extract emotion-related features.
-3. **Model Development:** Build unsupervised clustering models (K-Means, Hierarchical) to classify emotions.
-4. **Evaluation:** Assess model performance using appropriate metrics like accuracy, precision, and recall.
+This project explores the emotional undercurrents of personal vlogs recorded between 2020 and 2023, using **machine learning techniques** to identify tonal dynamics and cluster emotionally similar segments. By analyzing voice pitch, timbre, rhythm, and other acoustic features, the system aims to decode how vloggers **convey emotion through voice**—without relying on transcripts or facial expressions.
 
-## Features
+## 🧠 Project Objectives
 
-- **Audio Extraction:** Extracts audio from vlog files using `moviepy` and saves the files in a structured directory.
-- **Pre-processing:** Standardizes sample rates, trims silences, and extracts important audio features.
-- **Clustering Models:** K-Means and Agglomerative Clustering models used to analyze and group vlogs based on tonal and emotional content.
-- **Feature Visualization:** Waveforms, MFCC, and Chroma-STFT analyses offer insights into the emotional intensity and tonal characteristics of the vlogs.
+1. **Audio Pipeline Setup:** Extract and format high-quality audio from vlog videos for downstream processing.
+2. **Feature Engineering:** Derive expressive audio features such as **MFCCs, pitch, spectral contrast**, and **zero-crossing rate**.
+3. **Emotion Clustering:** Use **unsupervised learning** (K-Means, Hierarchical Clustering) to group vlogs into emotional categories.
+4. **Model Evaluation:** Visualize and evaluate cluster cohesion using **Silhouette Score**, waveform plots, and feature scattergrams.
 
-## File Structure
+---
+
+## 🚀 Key Features
+
+| Module              | Description |
+|---------------------|-------------|
+| 🎧 **Audio Extraction** | Uses `moviepy` to convert vlog video files to `.wav` audio format. |
+| 🛠️ **Pre-processing** | Standardizes sample rates, trims silences, and prepares data for modeling using `librosa`. |
+| 📊 **Feature Extraction** | Computes MFCCs, Chroma-STFT, Spectral Centroid, and more to capture tonal quality. |
+| 🔍 **Clustering Models** | Applies K-Means and Agglomerative Clustering to group similar emotional segments. |
+| 📈 **Visualization** | Provides waveform plots, MFCC heatmaps, and 2D PCA plots for interpretability. |
+
+---
+
+## 🗂️ Project Structure
 
 ```
+vlog-ai-analysis/
 ├── data/
-│   ├── raw/                # Original vlog files
-│   ├── processed/          # Processed audio files
+│   ├── raw/                # Original vlog video files
+│   ├── processed/          # Cleaned and trimmed audio in .wav format
 ├── notebooks/
-│   ├── vlog_analysis.ipynb # Jupyter notebook for data analysis and model building
+│   ├── vlog_analysis.ipynb # End-to-end notebook for analysis and clustering
 ├── src/
-│   ├── audio_extraction.py # Code for extracting audio from vlog files
-│   ├── pre_processing.py   # Code for pre-processing the audio files
-├── README.md               # Project readme
+│   ├── audio_extraction.py # Script to extract audio from vlog videos
+│   ├── pre_processing.py   # Script for silence trimming and feature extraction
+├── README.md               # Project documentation
+└── requirements.txt        # Python dependencies
 ```
 
-## Installation
+---
+
+## ⚙️ Installation Instructions
 
 1. Clone the repository:
-
 ```bash
-git clone https://github.com/yourusername/vlog-sentiment-analysis.git
+git clone https://github.com/yourusername/vlog-ai-analysis.git
+cd vlog-ai-analysis
 ```
 
-2. Install the required Python packages:
-
+2. Install required dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Ensure you have the following libraries installed:
-   - `librosa`
-   - `moviepy`
-   - `matplotlib`
-   - `numpy`
-   - `scikit-learn`
-   - `seaborn`
+3. Ensure the following libraries are installed:
+- `librosa`
+- `moviepy`
+- `matplotlib`
+- `scikit-learn`
+- `numpy`
+- `seaborn`
 
-## Data
+---
 
-The dataset consists of 102 vlogs recorded over three years, stored in the `/data/raw/` directory. The processed audio files are stored in `/data/processed/`. Key audio features such as MFCC, spectral centroid, zero crossings, and more are extracted for analysis.
+## 🎧 Data Overview
 
-## Usage
+The dataset consists of **102 vlogs** recorded from 2020 to 2023. Raw video files are stored in `/data/raw/`, and audio files (after extraction and cleaning) are stored in `/data/processed/`. Features include:
 
-### Audio Extraction
+- **Mel Frequency Cepstral Coefficients (MFCCs)**
+- **Chroma Frequencies**
+- **Zero Crossing Rate**
+- **Spectral Bandwidth**
 
-To extract audio from your vlog videos:
+---
 
+## 🧪 Running the Pipeline
+
+### Step 1: Audio Extraction
 ```bash
 python src/audio_extraction.py
 ```
 
-This will convert vlog files into `.wav` format and save them into the `data/processed/` folder.
-
-### Pre-processing
-
-To pre-process the extracted audio for model training:
-
+### Step 2: Audio Pre-processing
 ```bash
 python src/pre_processing.py
 ```
 
-This step trims silences and standardizes the audio sample rate.
-
-### Model Training and Evaluation
-
-You can explore and run the analysis in the Jupyter notebook:
-
+### Step 3: Explore & Cluster via Notebook
 ```bash
 jupyter notebook notebooks/vlog_analysis.ipynb
 ```
 
-This notebook includes:
-- Feature extraction using `librosa`
-- Clustering using K-Means and Hierarchical Clustering
-- Data visualization (waveforms, MFCC, etc.)
+Notebook includes:
+- Feature extraction
+- Dimensionality reduction (PCA)
+- K-Means & Hierarchical clustering
+- Visual analysis of audio-based emotions
 
-## Results
+---
 
-The project leverages unsupervised clustering to group vlogs based on tonal patterns. The optimal number of clusters was determined using the silhouette score. Visualizations of key features (MFCC, Chroma-STFT) show how emotions and tone vary across vlogs.
+## 📊 Results Snapshot
 
-## Future Improvements
+- Emotion clusters were identified using **silhouette score optimization**
+- Clear separation in tonal profiles based on MFCC and pitch variance
+- Clusters roughly corresponded to emotions like **excitement**, **calm**, **frustration**, and **melancholy**
 
-1. **Supervised Learning:** Further improvements can include manually labeling vlogs and using supervised models like CNNs for more precise emotion classification.
-2. **Additional Features:** Incorporating video analysis could enrich the emotional insights.
-3. **Real-time Analysis:** Implement real-time sentiment analysis for vlog recordings.
+---
+
+## 🔮 Future Directions
+
+1. **Supervised Classification:** Fine-tune with labeled data using CNN or RNN-based models.
+2. **Multimodal Emotion Detection:** Fuse video frames and audio for richer emotional understanding.
+3. **Real-Time Feedback:** Enable emotion detection during live recording or streaming.
+4. **Linguistic Layer:** Add NLP-based sentiment from transcripts for a hybrid audio-text model.
+
+---
+
+## 🧾 Acknowledgements
+
+- Audio analysis powered by [`librosa`](https://librosa.org/)
+- Video/audio preprocessing via [`moviepy`](https://zulko.github.io/moviepy/)
+- Clustering with `scikit-learn`
+- Project inspired by current trends in **affective computing** and **audio-based emotion recognition**
