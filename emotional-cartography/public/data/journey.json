@@ -1,8 +1,8 @@
 {
   "metadata": {
     "totalDuration": "3 years",
-    "totalClips": 15,
-    "countries": 5,
+    "totalClips": 14,
+    "countries": 7,
     "dateRange": ["2020-01-15", "2023-06-30"]
   },
   "chapters": [
@@ -11,110 +11,154 @@
       "country": "Singapore",
       "city": "Singapore",
       "coordinates": [103.8198, 1.3521],
-      "dateRange": "Jan 2020 - Mar 2020",
-      "scrollStart": 0.1,
-      "scrollEnd": 0.25,
+      "dateRange": "2020",
+      "scrollStart": 0.08,
+      "scrollEnd": 0.18,
       "color": "#4ECDC4",
       "emotionCluster": {
         "id": 1,
-        "label": "Grounded",
-        "confidence": 0.78
+        "label": "Reflective",
+        "confidence": 0.82
       },
       "narrative": {
         "headline": "Singapore",
         "subtitle": "Where it began",
-        "body": "Home. The familiar. I started recording vlogs here not knowing they would become data for a machine learning experiment three years later.",
-        "technicalNote": "Audio from this period showed high spectral stability—the algorithm detected consistent tonal patterns."
+        "body": "[Your narrative here] - Home. The familiar. Saying goodbye to family at the airport, about to board a flight to NYC.",
+        "technicalNote": "Audio from this period showed mixed patterns—Cluster 0 (contemplative) and Cluster 1 (reflective)."
       },
-      "audioClips": ["clip-sg-001", "clip-sg-002"]
-    },
-    {
-      "id": "ch-argentina",
-      "country": "Argentina",
-      "city": "Buenos Aires",
-      "coordinates": [-58.3816, -34.6037],
-      "dateRange": "Apr 2021 - Aug 2021",
-      "scrollStart": 0.25,
-      "scrollEnd": 0.4,
-      "color": "#FF6B6B",
-      "emotionCluster": {
-        "id": 2,
-        "label": "Energetic",
-        "confidence": 0.85
-      },
-      "narrative": {
-        "headline": "Buenos Aires",
-        "subtitle": "The year everything changed",
-        "body": "[Your narrative here] - What were you experiencing during this time in Argentina?",
-        "technicalNote": "Agglomerative clustering placed this segment in the high-energy cluster based on tempo and spectral bandwidth."
-      },
-      "audioClips": ["clip-ar-001", "clip-ar-002"]
+      "audioClips": ["sg-introspective-boarding", "sg-introspective-family"]
     },
     {
       "id": "ch-taiwan",
       "country": "Taiwan",
       "city": "Taipei",
       "coordinates": [121.5654, 25.033],
-      "dateRange": "Sep 2021 - Dec 2021",
-      "scrollStart": 0.4,
-      "scrollEnd": 0.55,
-      "color": "#FFE66D",
+      "dateRange": "2021",
+      "scrollStart": 0.18,
+      "scrollEnd": 0.28,
+      "color": "#95E1D3",
       "emotionCluster": {
-        "id": 3,
+        "id": 0,
         "label": "Contemplative",
-        "confidence": 0.72
+        "confidence": 0.75
       },
       "narrative": {
         "headline": "Taipei",
-        "subtitle": "A semester of reflection",
+        "subtitle": "A semester abroad",
         "body": "[Your narrative here] - What were you experiencing during this time in Taiwan?",
-        "technicalNote": "MFCC analysis revealed lower spectral centroid values during this period, suggesting a more contemplative vocal tone."
+        "technicalNote": "Both clips assigned to Cluster 0—neutral tonal patterns with moderate energy."
       },
-      "audioClips": ["clip-tw-001", "clip-tw-002"]
+      "audioClips": ["tw-neutral-topup", "tw-tired-bike"]
     },
     {
       "id": "ch-india",
       "country": "India",
       "city": "Hyderabad",
       "coordinates": [78.4867, 17.385],
-      "dateRange": "Jan 2022 - Apr 2022",
-      "scrollStart": 0.55,
-      "scrollEnd": 0.7,
-      "color": "#95E1D3",
+      "dateRange": "2022",
+      "scrollStart": 0.28,
+      "scrollEnd": 0.40,
+      "color": "#FFE66D",
       "emotionCluster": {
-        "id": 4,
-        "label": "Curious",
-        "confidence": 0.81
+        "id": 0,
+        "label": "Contemplative",
+        "confidence": 0.78
       },
       "narrative": {
         "headline": "India",
         "subtitle": "Sensory overload",
-        "body": "[Your narrative here] - What were you experiencing during this time in India?",
-        "technicalNote": "High zero-crossing rates indicated more dynamic vocal patterns, possibly reflecting environmental stimulation."
+        "body": "[Your narrative here] - Assignments, classes, and finding a cafe to write in.",
+        "technicalNote": "Cluster 0 assignment—tired and neutral tones detected in spectral analysis."
       },
-      "audioClips": ["clip-in-001", "clip-in-002"]
+      "audioClips": ["in-neutral-cafe", "in-tired-assignments"]
     },
     {
-      "id": "ch-usa",
-      "country": "United States",
-      "city": "New York",
-      "coordinates": [-74.006, 40.7128],
-      "dateRange": "May 2022 - Jun 2023",
-      "scrollStart": 0.7,
-      "scrollEnd": 0.85,
-      "color": "#7B61FF",
+      "id": "ch-argentina",
+      "country": "Argentina",
+      "city": "Buenos Aires",
+      "coordinates": [-58.3816, -34.6037],
+      "dateRange": "2022",
+      "scrollStart": 0.40,
+      "scrollEnd": 0.52,
+      "color": "#FF6B6B",
       "emotionCluster": {
         "id": 1,
-        "label": "Determined",
-        "confidence": 0.88
+        "label": "Reflective",
+        "confidence": 0.85
       },
       "narrative": {
-        "headline": "New York",
-        "subtitle": "The final chapter",
-        "body": "[Your narrative here] - What were you experiencing during this time in New York?",
-        "technicalNote": "Consistent RMS energy levels suggested a stable emotional baseline despite the intensity of city life."
+        "headline": "Buenos Aires",
+        "subtitle": "The year everything changed",
+        "body": "[Your narrative here] - Walking the streets, coming home after civic project meetings.",
+        "technicalNote": "Both clips assigned to Cluster 1—introspective vocal patterns with consistent spectral stability."
       },
-      "audioClips": ["clip-ny-001", "clip-ny-002"]
+      "audioClips": ["ar-introspective-buenosaires", "ar-introspective-civicproj"]
+    },
+    {
+      "id": "ch-korea",
+      "country": "South Korea",
+      "city": "Seoul",
+      "coordinates": [126.978, 37.5665],
+      "dateRange": "2022",
+      "scrollStart": 0.52,
+      "scrollEnd": 0.64,
+      "color": "#7B61FF",
+      "emotionCluster": {
+        "id": 3,
+        "label": "Energetic",
+        "confidence": 0.81
+      },
+      "narrative": {
+        "headline": "Seoul",
+        "subtitle": "Freezing but inspired",
+        "body": "[Your narrative here] - Freezing in the sun, meeting someone inspiring.",
+        "technicalNote": "Cluster 3—higher tempo and spectral energy detected, matching the 'excited' label in original files."
+      },
+      "audioClips": ["kr-excited-freezing", "kr-introspective-inspiration"]
+    },
+    {
+      "id": "ch-sweden",
+      "country": "Sweden",
+      "city": "Stockholm",
+      "coordinates": [18.0686, 59.3293],
+      "dateRange": "2023",
+      "scrollStart": 0.64,
+      "scrollEnd": 0.76,
+      "color": "#4ECDC4",
+      "emotionCluster": {
+        "id": 2,
+        "label": "Grateful",
+        "confidence": 0.79
+      },
+      "narrative": {
+        "headline": "Sweden",
+        "subtitle": "Northern lights and reindeer",
+        "body": "[Your narrative here] - Grateful for the trip vibes, trying reindeer meat.",
+        "technicalNote": "Unique Cluster 2—only Swedish clips fell here, suggesting distinct vocal characteristics."
+      },
+      "audioClips": ["se-introspective-tripvibes", "se-tired-reindeer"]
+    },
+    {
+      "id": "ch-nyc",
+      "country": "United States",
+      "city": "New York City",
+      "coordinates": [-74.006, 40.7128],
+      "dateRange": "2023",
+      "scrollStart": 0.76,
+      "scrollEnd": 0.88,
+      "color": "#FF9F1C",
+      "emotionCluster": {
+        "id": 0,
+        "label": "Determined",
+        "confidence": 0.84
+      },
+      "narrative": {
+        "headline": "New York City",
+        "subtitle": "The final chapter",
+        "body": "[Your narrative here] - Running through the city, walking in Central Park.",
+        "technicalNote": "Mixed clusters—6k run (Cluster 1) vs Central Park walk (Cluster 0), showing emotional range."
+      },
+      "audioClips": ["nyc-introspective-run", "nyc-introspective-centralpark"]
     }
   ]
 }
