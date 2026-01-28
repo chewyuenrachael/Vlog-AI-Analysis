@@ -65,12 +65,30 @@ export function AudioEngine({ clips = [] }: AudioEngineProps) {
   }, [currentClipId, isAudioEnabled, clips]);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-16 bg-black/50 backdrop-blur-sm z-50 border-t border-white/10">
-      <WaveformVisualizer
-        waveform={currentWaveform}
-        isPlaying={!!currentClipId && isAudioEnabled}
-      />
-      <AudioToggle />
+    <div className="fixed bottom-0 left-0 right-0 h-14 sm:h-16 bg-black/60 backdrop-blur-md z-50 border-t border-white/10">
+      <div className="flex items-center h-full px-4 sm:px-8">
+        {/* Audio status indicator - mobile only */}
+        <div className="sm:hidden flex items-center gap-2 flex-1">
+          <div
+            className={`w-2 h-2 rounded-full ${
+              isAudioEnabled ? 'bg-green-400 animate-pulse' : 'bg-white/30'
+            }`}
+          />
+          <span className="text-xs text-white/50 font-mono">
+            {isAudioEnabled ? 'Audio on' : 'Audio off'}
+          </span>
+        </div>
+
+        {/* Waveform - hidden on mobile, visible on tablet+ */}
+        <div className="hidden sm:flex flex-1 items-center justify-center">
+          <WaveformVisualizer
+            waveform={currentWaveform}
+            isPlaying={!!currentClipId && isAudioEnabled}
+          />
+        </div>
+
+        <AudioToggle />
+      </div>
     </div>
   );
 }
@@ -88,14 +106,19 @@ function WaveformVisualizer({
       ? waveform
       : Array.from({ length: 50 }, () => Math.random() * 0.5 + 0.2);
 
+  // Limit bars on smaller screens
+  const maxBars = 50;
+  const step = Math.ceil(displayWaveform.length / maxBars);
+  const sampledWaveform = displayWaveform.filter((_, i) => i % step === 0).slice(0, maxBars);
+
   return (
-    <div className="flex items-center justify-center h-full gap-[2px] px-8">
-      {displayWaveform.map((value, i) => (
+    <div className="flex items-center justify-center gap-[2px]">
+      {sampledWaveform.map((value, i) => (
         <div
           key={i}
-          className="w-1 bg-white/60 rounded-full transition-all duration-150"
+          className="w-0.5 sm:w-1 bg-white/60 rounded-full transition-all duration-150"
           style={{
-            height: `${Math.max(value * 40, 4)}px`,
+            height: `${Math.max(value * 32, 4)}px`,
             opacity: isPlaying ? 0.8 : 0.3,
           }}
         />
@@ -110,13 +133,13 @@ function AudioToggle() {
   return (
     <button
       onClick={toggleAudio}
-      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+      className="p-2 sm:p-2.5 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
       aria-label={isAudioEnabled ? 'Mute audio' : 'Enable audio'}
     >
       {isAudioEnabled ? (
-        <SpeakerOnIcon className="w-5 h-5 text-white" />
+        <SpeakerOnIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
       ) : (
-        <SpeakerOffIcon className="w-5 h-5 text-white/50" />
+        <SpeakerOffIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white/50" />
       )}
     </button>
   );
