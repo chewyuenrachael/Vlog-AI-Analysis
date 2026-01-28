@@ -38,6 +38,7 @@ export default function HomePage() {
   const [journeyData, setJourneyData] = useState<JourneyData | null>(null);
   const [clipDataMap, setClipDataMap] = useState<Map<string, ClipData>>(new Map());
   const [audioClips, setAudioClips] = useState<AudioClipInfo[]>([]);
+  const [expandedML, setExpandedML] = useState<string | null>(null);
   const currentChapter = getCurrentChapter();
 
   // Load journey data
@@ -96,28 +97,39 @@ export default function HomePage() {
 
   return (
     <main className="bg-[#0a0a0f] text-white min-h-screen">
-      {/* Fixed background map */}
-      <MapCanvas />
+      {/* Fixed background map - hidden on mobile, partial on tablet */}
+      <div className="hidden md:block">
+        <MapCanvas />
+      </div>
+
+      {/* Mobile map header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-[30vh] z-0 overflow-hidden">
+        <MapCanvas />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0a0a0f]" />
+      </div>
 
       {/* Scrollable content */}
       <ScrollManager>
         {/* Hero Section */}
-        <section className="h-screen flex items-center justify-center relative z-10">
-          <div className="text-center max-w-2xl px-8">
-            <h1 className="text-5xl lg:text-7xl font-serif mb-6 animate-fade-in">
+        <section className="h-screen flex items-center justify-center relative z-10 pt-[15vh] md:pt-0">
+          <div className="text-center max-w-2xl px-4 sm:px-8">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-serif mb-4 sm:mb-6 animate-fade-in">
               Emotional Cartography
             </h1>
             <p
-              className="text-xl text-white/60 mb-8 animate-fade-in"
+              className="text-base sm:text-lg lg:text-xl text-white/60 mb-6 sm:mb-8 animate-fade-in leading-relaxed"
               style={{ animationDelay: '0.2s' }}
             >
               I recorded vlogs across {journeyData.metadata.countries} countries over{' '}
               {journeyData.metadata.totalDuration}.
-              <br />
+              <br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>
               Then I asked:{' '}
               <em className="text-white/80">can a machine understand how I felt?</em>
             </p>
-            <div className="animate-bounce text-white/40 mt-12">↓ Scroll to explore</div>
+            <div className="animate-bounce text-white/40 mt-8 sm:mt-12 text-sm sm:text-base">
+              ↓ Scroll to explore
+            </div>
           </div>
         </section>
 
@@ -125,19 +137,25 @@ export default function HomePage() {
         {journeyData.chapters.map((chapter) => {
           const primaryClipId = chapter.audioClips[0];
           const clipFeatures = getChapterFeatures(primaryClipId);
+          const isMLExpanded = expandedML === chapter.id;
 
           return (
             <section
               key={chapter.id}
-              className="min-h-screen relative z-10"
+              className="min-h-screen relative z-10 pt-[20vh] md:pt-0"
               data-chapter={chapter.id}
             >
-              <div className="container mx-auto min-h-screen grid lg:grid-cols-[1fr_500px] gap-8 items-center px-4">
-                {/* Left side: Map shows through (transparent) */}
+              {/* Desktop/Tablet layout */}
+              <div className="container mx-auto min-h-screen px-4 
+                             flex flex-col md:grid md:grid-cols-1 lg:grid-cols-[1fr_500px] 
+                             gap-4 md:gap-8 items-start md:items-center py-8 md:py-0">
+                {/* Left side: Map shows through (transparent) - desktop only */}
                 <div className="hidden lg:block" />
 
                 {/* Right side: Narrative + ML Viz */}
-                <div className="glass rounded-2xl overflow-hidden min-h-[80vh] flex flex-col">
+                <div className="glass rounded-2xl overflow-hidden w-full 
+                               min-h-[60vh] md:min-h-[70vh] lg:min-h-[80vh] 
+                               flex flex-col">
                   <NarrativePanel
                     headline={chapter.narrative.headline}
                     subtitle={chapter.narrative.subtitle}
@@ -146,12 +164,33 @@ export default function HomePage() {
                     color={chapter.color}
                   />
 
-                  <div className="p-6 border-t border-white/10">
-                    <MLVisualizer
-                      spectrogramUrl={`/spectrograms/${primaryClipId}.png`}
-                      features={clipFeatures}
-                      cluster={chapter.emotionCluster}
-                    />
+                  {/* ML Visualizer - collapsible on mobile */}
+                  <div className="border-t border-white/10">
+                    {/* Mobile: Collapsible header */}
+                    <button
+                      className="md:hidden w-full p-4 flex items-center justify-between text-left"
+                      onClick={() => setExpandedML(isMLExpanded ? null : chapter.id)}
+                    >
+                      <span className="text-xs uppercase tracking-widest text-white/50 font-mono">
+                        ML Analysis
+                      </span>
+                      <span className="text-white/50 text-xl">
+                        {isMLExpanded ? '−' : '+'}
+                      </span>
+                    </button>
+
+                    {/* ML Content - always visible on tablet+, collapsible on mobile */}
+                    <div
+                      className={`p-4 sm:p-6 ${
+                        isMLExpanded ? 'block' : 'hidden'
+                      } md:block`}
+                    >
+                      <MLVisualizer
+                        spectrogramUrl={`/spectrograms/${primaryClipId}.png`}
+                        features={clipFeatures}
+                        cluster={chapter.emotionCluster}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -160,48 +199,53 @@ export default function HomePage() {
         })}
 
         {/* Conclusion Section */}
-        <section className="min-h-screen flex items-center justify-center relative z-10">
-          <div className="text-center max-w-3xl px-8">
-            <h2 className="text-4xl lg:text-5xl font-serif mb-8">
+        <section className="min-h-screen flex items-center justify-center relative z-10 py-16 md:py-0">
+          <div className="text-center max-w-3xl px-4 sm:px-8">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif mb-6 sm:mb-8">
               What the Machine Learned
             </h2>
-            <p className="text-xl text-white/70 leading-relaxed mb-12">
+            <p className="text-base sm:text-lg lg:text-xl text-white/70 leading-relaxed mb-8 sm:mb-12">
               Agglomerative clustering worked best—it captured the nuances of voice
               modulation better than KMeans or Spectral methods. But the real insight
               wasn&apos;t technical.
             </p>
-            <blockquote className="text-2xl font-serif italic text-white/90 border-l-4 border-purple-500 pl-6 text-left">
+            <blockquote className="text-lg sm:text-xl lg:text-2xl font-serif italic text-white/90 border-l-4 border-purple-500 pl-4 sm:pl-6 text-left">
               &quot;The process of systematizing something as messy as emotion taught me
               that even the most human problems can benefit from structure—if you
               approach them with humility.&quot;
             </blockquote>
 
             {/* Metrics summary */}
-            <div className="mt-16 grid grid-cols-3 gap-8 text-center">
+            <div className="mt-12 sm:mt-16 grid grid-cols-3 gap-4 sm:gap-8 text-center">
               <div>
-                <div className="text-4xl font-mono text-purple-400">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-mono text-purple-400">
                   {journeyData.metadata.totalClips}
                 </div>
-                <div className="text-sm text-white/50 mt-1">Audio Clips</div>
+                <div className="text-xs sm:text-sm text-white/50 mt-1">Audio Clips</div>
               </div>
               <div>
-                <div className="text-4xl font-mono text-cyan-400">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-mono text-cyan-400">
                   {journeyData.metadata.countries}
                 </div>
-                <div className="text-sm text-white/50 mt-1">Countries</div>
+                <div className="text-xs sm:text-sm text-white/50 mt-1">Countries</div>
               </div>
               <div>
-                <div className="text-4xl font-mono text-amber-400">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-mono text-amber-400">
                   {journeyData.metadata.totalDuration}
                 </div>
-                <div className="text-sm text-white/50 mt-1">Duration</div>
+                <div className="text-xs sm:text-sm text-white/50 mt-1">Duration</div>
               </div>
             </div>
+
+            {/* Mobile prompt */}
+            <p className="mt-12 text-sm text-white/30 md:hidden">
+              View on desktop for full map experience
+            </p>
           </div>
         </section>
 
         {/* Footer spacer for audio bar */}
-        <div className="h-20" />
+        <div className="h-24 sm:h-20" />
       </ScrollManager>
 
       {/* Audio controls - fixed at bottom */}
