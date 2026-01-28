@@ -12,10 +12,19 @@ export function MapCanvas() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const { scrollProgress, chapters } = useJourneyStore();
   const getCurrentChapter = useJourneyStore((state) => state.getCurrentChapter);
   const currentChapter = getCurrentChapter();
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Initialize map
   useEffect(() => {
@@ -27,8 +36,8 @@ export function MapCanvas() {
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [103.8198, 1.3521], // Singapore - starting point
-      zoom: 3,
-      pitch: 45,
+      zoom: isMobile ? 2 : 3,
+      pitch: isMobile ? 30 : 45,
       bearing: 0,
       interactive: false, // Scroll controls the map, not mouse
     });
@@ -41,7 +50,7 @@ export function MapCanvas() {
       map.current?.remove();
       map.current = null;
     };
-  }, []);
+  }, [isMobile]);
 
   // Add journey path when chapters are loaded
   useEffect(() => {
@@ -78,12 +87,12 @@ export function MapCanvas() {
       },
       paint: {
         'line-color': '#FF9F1C',
-        'line-width': 3,
+        'line-width': isMobile ? 2 : 3,
         'line-opacity': 0.7,
         'line-dasharray': [2, 2],
       },
     });
-  }, [chapters, mapLoaded]);
+  }, [chapters, mapLoaded, isMobile]);
 
   // Fly to current chapter's location
   useEffect(() => {
@@ -91,13 +100,13 @@ export function MapCanvas() {
 
     map.current.flyTo({
       center: currentChapter.coordinates,
-      zoom: 6,
-      pitch: 50,
-      bearing: scrollProgress * 60, // Subtle rotation as you scroll
+      zoom: isMobile ? 4 : 6,
+      pitch: isMobile ? 30 : 50,
+      bearing: scrollProgress * (isMobile ? 30 : 60), // Less rotation on mobile
       duration: 2000,
       essential: true,
     });
-  }, [currentChapter?.id, mapLoaded, scrollProgress]);
+  }, [currentChapter?.id, mapLoaded, scrollProgress, isMobile]);
 
   // Update emotion overlay
   useEffect(() => {
@@ -129,21 +138,21 @@ export function MapCanvas() {
       type: 'circle',
       source: 'emotion-overlay',
       paint: {
-        'circle-radius': 80,
+        'circle-radius': isMobile ? 50 : 80,
         'circle-color': currentChapter.color,
         'circle-opacity': 0.3,
         'circle-blur': 1,
       },
     });
-  }, [currentChapter?.id, currentChapter?.color, mapLoaded]);
+  }, [currentChapter?.id, currentChapter?.color, mapLoaded, isMobile]);
 
   // Show placeholder if no Mapbox token
   if (!MAPBOX_TOKEN) {
     return (
       <div className="fixed inset-0 w-full h-full bg-[#0a0a0f] flex items-center justify-center z-0">
-        <div className="text-center text-white/50">
-          <p className="text-lg mb-2">Map requires Mapbox token</p>
-          <p className="text-sm font-mono">
+        <div className="text-center text-white/50 px-4">
+          <p className="text-base sm:text-lg mb-2">Map requires Mapbox token</p>
+          <p className="text-xs sm:text-sm font-mono break-all">
             Add NEXT_PUBLIC_MAPBOX_TOKEN to .env.local
           </p>
         </div>
