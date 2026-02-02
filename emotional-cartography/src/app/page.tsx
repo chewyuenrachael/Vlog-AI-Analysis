@@ -96,17 +96,12 @@ export default function HomePage() {
   }
 
   return (
-    <main className="bg-[#0a0a0f] text-white min-h-screen">
-      {/* Fixed background map - hidden on mobile, partial on tablet */}
-      <div className="hidden md:block">
-        <MapCanvas />
-      </div>
+    <main className="text-white min-h-screen">
+      {/* Fixed background map */}
+      <MapCanvas />
 
-      {/* Mobile map header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-[30vh] z-0 overflow-hidden">
-        <MapCanvas />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0a0a0f]" />
-      </div>
+      {/* Mobile gradient overlay */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-[40vh] z-[1] pointer-events-none bg-gradient-to-b from-transparent via-transparent to-[#0a0a0f]" />
 
       {/* Scrollable content */}
       <ScrollManager>
