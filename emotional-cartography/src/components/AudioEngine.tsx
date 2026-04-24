@@ -1,10 +1,26 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Howl } from 'howler';
+import { Howl, Howler } from 'howler';
 import { useJourneyStore } from '@/stores/journeyStore';
+import type { Chapter } from '@/types';
 
-// Simple clip info for audio playback
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+
+const ACTIVE_VOLUME = 0.7;
+const CROSSFADE_MS = 600;
+const MUTE_FADE_MS = 400;
+const IO_THROTTLE_MS = 250;
+const IO_MIN_RATIO = 0.4;
+const SEEK_DEBOUNCE_MS = 100;
+const SEEK_DRIFT_THRESHOLD_S = 0.5;
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 export interface AudioClipInfo {
   id: string;
   url: string;
@@ -13,61 +29,198 @@ export interface AudioClipInfo {
 
 interface AudioEngineProps {
   clips?: AudioClipInfo[];
+  chapters?: Chapter[];
 }
 
-export function AudioEngine({ clips = [] }: AudioEngineProps) {
-  const { isAudioEnabled, currentClipId, setCurrentClip } = useJourneyStore();
+// ---------------------------------------------------------------------------
+// AudioEngine
+// ---------------------------------------------------------------------------
+
+export function AudioEngine({ clips = [], chapters = [] }: AudioEngineProps) {
+  const isAudioEnabled = useJourneyStore((s) => s.isAudioEnabled);
+  const currentClipId = useJourneyStore((s) => s.currentClipId);
+  const setCurrentClip = useJourneyStore((s) => s.setCurrentClip);
+  const scrollProgress = useJourneyStore((s) => s.scrollProgress);
+  const getChapterProgress = useJourneyStore((s) => s.getChapterProgress);
+
   const soundsRef = useRef<Map<string, Howl>>(new Map());
+  const fadeTimeoutsRef = useRef<Map<string, number>>(new Map());
   const [currentWaveform, setCurrentWaveform] = useState<number[]>([]);
 
-  // Preload all audio clips
+  // -------- Preload all Howls --------
   useEffect(() => {
     clips.forEach((clip) => {
-      if (!soundsRef.current.has(clip.id)) {
-        const sound = new Howl({
-          src: [clip.url],
-          preload: true,
-          volume: 0.7,
-          onend: () => setCurrentClip(null),
-        });
-        soundsRef.current.set(clip.id, sound);
+      if (soundsRef.current.has(clip.id)) return;
+      const sound = new Howl({
+        src: [clip.url],
+        preload: true,
+        html5: false,
+        volume: 0,
+      });
+      soundsRef.current.set(clip.id, sound);
+    });
+
+    const sounds = soundsRef.current;
+    const fades = fadeTimeoutsRef.current;
+    return () => {
+      fades.forEach((id) => window.clearTimeout(id));
+      fades.clear();
+      sounds.forEach((s) => s.unload());
+      sounds.clear();
+    };
+  }, [clips]);
+
+  // -------- IntersectionObserver → setCurrentClip --------
+  useEffect(() => {
+    if (!chapters.length || typeof window === 'undefined') return;
+
+    const visibility = new Map<string, number>();
+    let throttleTimer: number | null = null;
+    let lastRun = 0;
+
+    const pickWinner = () => {
+      let bestId: string | null = null;
+      let bestRatio = 0;
+      visibility.forEach((ratio, id) => {
+        if (ratio > bestRatio) {
+          bestRatio = ratio;
+          bestId = id;
+        }
+      });
+
+      if (bestId && bestRatio >= IO_MIN_RATIO) {
+        const ch = chapters.find((c) => c.id === bestId);
+        const nextClipId = ch?.audioClips[0] ?? null;
+        if (nextClipId && nextClipId !== useJourneyStore.getState().currentClipId) {
+          setCurrentClip(nextClipId);
+        }
+      }
+    };
+
+    const schedulePick = () => {
+      const now = performance.now();
+      const elapsed = now - lastRun;
+      if (elapsed >= IO_THROTTLE_MS) {
+        lastRun = now;
+        pickWinner();
+      } else if (throttleTimer == null) {
+        throttleTimer = window.setTimeout(() => {
+          lastRun = performance.now();
+          throttleTimer = null;
+          pickWinner();
+        }, IO_THROTTLE_MS - elapsed);
+      }
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const id = (entry.target as HTMLElement).dataset.chapter;
+          if (!id) continue;
+          visibility.set(
+            id,
+            entry.isIntersecting ? entry.intersectionRatio : 0,
+          );
+        }
+        schedulePick();
+      },
+      { threshold: [0, 0.2, 0.4, 0.6, 0.8, 1] },
+    );
+
+    const nodes = document.querySelectorAll<HTMLElement>('[data-chapter]');
+    nodes.forEach((n) => io.observe(n));
+
+    return () => {
+      if (throttleTimer != null) window.clearTimeout(throttleTimer);
+      io.disconnect();
+    };
+  }, [chapters, setCurrentClip]);
+
+  // -------- Crossfade on clip change / mute change --------
+  useEffect(() => {
+    const sounds = soundsRef.current;
+    const fades = fadeTimeoutsRef.current;
+
+    // Fade out any non-current clips that are playing
+    sounds.forEach((sound, id) => {
+      if (id !== currentClipId && sound.playing()) {
+        const v = sound.volume();
+        sound.fade(v, 0, CROSSFADE_MS);
+        const prev = fades.get(id);
+        if (prev) window.clearTimeout(prev);
+        const t = window.setTimeout(() => {
+          if (sound.playing()) sound.stop();
+          fades.delete(id);
+        }, CROSSFADE_MS + 50);
+        fades.set(id, t);
       }
     });
 
-    return () => {
-      soundsRef.current.forEach((sound) => sound.unload());
-      soundsRef.current.clear();
-    };
-  }, [clips, setCurrentClip]);
-
-  // Play/pause based on state
-  useEffect(() => {
-    if (!currentClipId || !isAudioEnabled) {
-      // Fade out all playing sounds
-      soundsRef.current.forEach((sound) => {
-        if (sound.playing()) {
-          sound.fade(sound.volume(), 0, 500);
-          setTimeout(() => sound.stop(), 500);
-        }
-      });
+    if (!currentClipId) {
+      setCurrentWaveform([]);
       return;
     }
 
-    const sound = soundsRef.current.get(currentClipId);
-    if (sound && !sound.playing()) {
-      sound.fade(0, 0.7, 500);
-      sound.play();
+    const sound = sounds.get(currentClipId);
+    if (!sound) return;
 
-      // Update waveform for visualization
-      const clip = clips.find((c) => c.id === currentClipId);
-      if (clip) setCurrentWaveform(clip.waveform);
+    const clip = clips.find((c) => c.id === currentClipId);
+    if (clip) setCurrentWaveform(clip.waveform);
+
+    if (!isAudioEnabled) {
+      // Muted — pause to preserve seek position; silent no-op if not playing yet
+      if (sound.playing()) {
+        const v = sound.volume();
+        sound.fade(v, 0, MUTE_FADE_MS);
+        const prev = fades.get(currentClipId);
+        if (prev) window.clearTimeout(prev);
+        const t = window.setTimeout(() => {
+          sound.pause();
+          fades.delete(currentClipId);
+        }, MUTE_FADE_MS + 50);
+        fades.set(currentClipId, t);
+      }
+      return;
     }
+
+    // Audio enabled: start or resume with a fade-in
+    const pendingFade = fades.get(currentClipId);
+    if (pendingFade) {
+      window.clearTimeout(pendingFade);
+      fades.delete(currentClipId);
+    }
+    if (!sound.playing()) {
+      sound.volume(0);
+      sound.play();
+    }
+    sound.fade(sound.volume(), ACTIVE_VOLUME, CROSSFADE_MS);
   }, [currentClipId, isAudioEnabled, clips]);
+
+  // -------- Debounced seek tied to chapter progress --------
+  useEffect(() => {
+    if (!currentClipId || !isAudioEnabled) return;
+    const sound = soundsRef.current.get(currentClipId);
+    if (!sound) return;
+
+    const handle = window.setTimeout(() => {
+      if (!sound.playing()) return;
+      const duration = sound.duration();
+      if (!duration || !isFinite(duration)) return;
+
+      const progress = Math.max(0, Math.min(1, getChapterProgress()));
+      const target = progress * duration;
+      const current = Number(sound.seek() ?? 0);
+      if (Math.abs(target - current) > SEEK_DRIFT_THRESHOLD_S) {
+        sound.seek(target);
+      }
+    }, SEEK_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(handle);
+  }, [scrollProgress, currentClipId, isAudioEnabled, getChapterProgress]);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 h-14 sm:h-16 bg-black/60 backdrop-blur-md z-50 border-t border-white/10">
       <div className="flex items-center h-full px-4 sm:px-8">
-        {/* Audio status indicator - mobile only */}
         <div className="sm:hidden flex items-center gap-2 flex-1">
           <div
             className={`w-2 h-2 rounded-full ${
@@ -79,7 +232,6 @@ export function AudioEngine({ clips = [] }: AudioEngineProps) {
           </span>
         </div>
 
-        {/* Waveform - hidden on mobile, visible on tablet+ */}
         <div className="hidden sm:flex flex-1 items-center justify-center">
           <WaveformVisualizer
             waveform={currentWaveform}
@@ -93,6 +245,54 @@ export function AudioEngine({ clips = [] }: AudioEngineProps) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Hero tap-to-enable gate
+// ---------------------------------------------------------------------------
+
+export function AudioEnablePrompt() {
+  const isAudioEnabled = useJourneyStore((s) => s.isAudioEnabled);
+  const toggleAudio = useJourneyStore((s) => s.toggleAudio);
+
+  if (isAudioEnabled) return null;
+
+  const handleEnable = () => {
+    // Unlock the Web Audio context in the same user-gesture tick
+    // (iOS Safari requires this; Howler.autoUnlock covers most cases
+    // but we're explicit to be safe).
+    try {
+      const ctx = (Howler as unknown as { ctx?: AudioContext }).ctx;
+      if (ctx && ctx.state === 'suspended') {
+        void ctx.resume();
+      }
+    } catch {
+      // ignore; Howler.autoUnlock will still handle it
+    }
+    toggleAudio();
+  };
+
+  return (
+    <button
+      onClick={handleEnable}
+      className="group inline-flex items-center gap-2 mt-6 sm:mt-8 px-4 py-2 rounded-full
+                 bg-white/10 hover:bg-white/20 active:bg-white/30
+                 border border-white/20 transition-colors
+                 text-xs sm:text-sm text-white/80 font-mono animate-fade-in"
+      style={{ animationDelay: '0.4s' }}
+      aria-label="Enable audio for the journey"
+    >
+      <span className="relative flex w-2 h-2">
+        <span className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-75" />
+        <span className="relative rounded-full w-2 h-2 bg-green-400" />
+      </span>
+      Tap to hear the journey
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Internal UI
+// ---------------------------------------------------------------------------
+
 function WaveformVisualizer({
   waveform,
   isPlaying,
@@ -100,16 +300,16 @@ function WaveformVisualizer({
   waveform: number[];
   isPlaying: boolean;
 }) {
-  // Generate placeholder waveform if none provided
   const displayWaveform =
     waveform.length > 0
       ? waveform
       : Array.from({ length: 50 }, () => Math.random() * 0.5 + 0.2);
 
-  // Limit bars on smaller screens
   const maxBars = 50;
   const step = Math.ceil(displayWaveform.length / maxBars);
-  const sampledWaveform = displayWaveform.filter((_, i) => i % step === 0).slice(0, maxBars);
+  const sampledWaveform = displayWaveform
+    .filter((_, i) => i % step === 0)
+    .slice(0, maxBars);
 
   return (
     <div className="flex items-center justify-center gap-[2px]">
@@ -128,11 +328,22 @@ function WaveformVisualizer({
 }
 
 function AudioToggle() {
-  const { isAudioEnabled, toggleAudio } = useJourneyStore();
+  const isAudioEnabled = useJourneyStore((s) => s.isAudioEnabled);
+  const toggleAudio = useJourneyStore((s) => s.toggleAudio);
+
+  const handleClick = () => {
+    try {
+      const ctx = (Howler as unknown as { ctx?: AudioContext }).ctx;
+      if (ctx && ctx.state === 'suspended') void ctx.resume();
+    } catch {
+      // ignore
+    }
+    toggleAudio();
+  };
 
   return (
     <button
-      onClick={toggleAudio}
+      onClick={handleClick}
       className="p-2 sm:p-2.5 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
       aria-label={isAudioEnabled ? 'Mute audio' : 'Enable audio'}
     >
@@ -145,7 +356,6 @@ function AudioToggle() {
   );
 }
 
-// Simple speaker icons
 function SpeakerOnIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
