@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ScrollManager } from '@/components/ScrollManager';
 import { MapCanvas } from '@/components/MapCanvas';
-import { AudioEngine } from '@/components/AudioEngine';
+import { AudioEngine, AudioEnablePrompt } from '@/components/AudioEngine';
 import { MLVisualizer } from '@/components/MLVisualizer';
 import { NarrativePanel } from '@/components/NarrativePanel';
 import { useJourneyStore } from '@/stores/journeyStore';
@@ -122,6 +122,7 @@ export default function HomePage() {
               Then I asked:{' '}
               <em className="text-white/80">can a machine understand how I felt?</em>
             </p>
+            <AudioEnablePrompt />
             <div className="animate-bounce text-white/40 mt-8 sm:mt-12 text-sm sm:text-base">
               ↓ Scroll to explore
             </div>
@@ -244,7 +245,7 @@ export default function HomePage() {
       </ScrollManager>
 
       {/* Audio controls - fixed at bottom */}
-      <AudioEngine clips={audioClips} />
+      <AudioEngine clips={audioClips} chapters={journeyData.chapters} />
     </main>
   );
 }
